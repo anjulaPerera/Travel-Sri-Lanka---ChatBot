@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Travel Sri Lanka</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #444444;
+      }
+
+      #chat-container {
+        background-color: #2e2e2e;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        width: 75%;
+        height: 550px;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      #chat-history {
+        height: 450px;
+        overflow-y: scroll;
+        padding-right: 10px; /* Adjust padding to make space for content */
+      }
+
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      #chat-history::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Hide scrollbar for IE, Edge and Firefox */
+      #chat-history {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+      }
+
+      .user-message {
+        text-align: right;
+        padding: 10px;
+        background-color: #0099ff;
+        border-radius: 10px;
+        margin-bottom: 5px;
+        width: fit-content;
+        width: -moz-fit-content;
+        align-self: flex-end;
+        white-space: pre-wrap;
+        color: white;
+      }
+
+      .bot-message {
+        text-align: left;
+        padding: 10px;
+        background-color: #4e4e4e;
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 5px;
+        width: fit-content;
+        width: -moz-fit-content;
+        align-self: flex-end;
+        white-space: pre-wrap;
+      }
+
+      form {
+        display: flex;
+      }
+
+      input {
+        flex-grow: 1;
+        margin-right: 10px;
+        padding: 10px;
+        border: 1px solid #525252;
+        border-radius: 5px;
+        background-color: #dfdede;
+        color: rgb(0, 0, 0);
+      }
+
+      button {
+        background-color: #11b917;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 900;
+      }
+
+      #loader {
+        display: none; /* Hide by default */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .title-ash {
+        color: #a0a0a0;
+      }
+
+      .topic {
+        display: flex;
+        justify-content: center;
+        font-weight: 900;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat-container">
+      <div class="topic">
+        <h1 class="title-ash">Travel</h1>
+        <h1 class="title-ash">SriLanka</h1>
+      </div>
+      <div id="chat-history"></div>
+      <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Enter your message" />
+        <button type="submit">/\</button>
+      </form>
+    </div>
+    <div id="loader">
+      <img src="loader.gif" width="150px" alt="Loading..." />
+    </div>
+    <script>
+      const chatHistory = document.getElementById("chat-history");
+      const userInput = document.getElementById("user-input");
+      const form = document.getElementById("chat-form");
+
+      async function sendMessage() {
+        const userMessage = userInput.value;
+        userInput.value = ""; // Clear input field
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userInput: userMessage }),
+          });
+
+          const data = await response.json();
+          const botMessage = data.response;
+
+          // Format the bot message
+          const formattedBotMessage = formatBotMessage(botMessage);
+
+          // Add chat message to the chat history
+          chatHistory.innerHTML += `<div class="user-message">${userMessage}</div>`;
+          chatHistory.innerHTML += `<div class="bot-message">${formattedBotMessage}</div>`;
+
+          // Scroll to the bottom of the chat history
+          chatHistory.scrollTop = chatHistory.scrollHeight;
+        } catch (error) {
+          console.error("Error:", error);
+          // Handle errors gracefully, e.g., display an error message to the user
+        }
+      }
+
+      function formatBotMessage(message) {
+        // Add formatting logic here if needed
+        // Example: Replace newline characters with <br> for better display
+        return message
+          .replace(/\n/g, "<br>")
+          .replace(/\* \*\*(.*?)\*\*\s*/g, "<strong>$1</strong><br>");
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault(); // Prevent form submission
+        const loader = document.getElementById("loader");
+        loader.style.display = "block"; // Show the loader
+        sendMessage().finally(() => {
+          loader.style.display = "none"; // Hide the loader after the message is sent
+        });
+      });
+    </script>
+  </body>
+</html>
