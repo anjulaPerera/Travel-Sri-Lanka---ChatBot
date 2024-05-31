@@ -1,6 +1,3 @@
-// node --version # Should be >= 18
-// npm install @google/generative-ai express
-
 const express = require("express");
 const {
   GoogleGenerativeAI,
@@ -8,12 +5,16 @@ const {
   HarmBlockThreshold,
 } = require("@google/generative-ai");
 const dotenv = require("dotenv").config();
+const connectDB = require("./db");
+const Chat = require("./models/chat");
 
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(express.json());
 const MODEL_NAME = "gemini-pro";
 const API_KEY = process.env.API_KEY;
+
+connectDB();
 
 async function runChat(userInput) {
   const genAI = new GoogleGenerativeAI(API_KEY);
@@ -23,7 +24,7 @@ async function runChat(userInput) {
     temperature: 0.9,
     topK: 1,
     topP: 1,
-    maxOutputTokens: 1000,
+    maxOutputTokens: 8192,
   };
 
   const safetySettings = [
@@ -223,14 +224,24 @@ app.get("/loader.gif", (req, res) => {
 app.post("/chat", async (req, res) => {
   try {
     const userInput = req.body?.userInput;
-    console.log("incoming /chat req", userInput);
+    console.log("incoming /chat req===>>>", userInput);
     if (!userInput) {
       return res.status(400).json({ error: "Invalid request body" });
     }
 
     const response = await runChat(userInput);
+
+    // Save user message and bot response to the database
+    const chatEntry = new Chat({
+      userMessage: userInput,
+      botResponse: response,
+    });
+
+    await chatEntry.save();
+
     res.json({ response });
   } catch (error) {
+    console.log("in catch ");
     console.error("Error in chat endpoint:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
